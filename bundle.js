@@ -80405,7 +80405,7 @@ var substack = skin(game.THREE, 'substack.png').createPlayerObject()
 substack.position.set(0, 62, -20)
 game.scene.add(substack)
 
-require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
+require('voxel-geometry').loadGeometry('/voxel-engine/demo/shapefiles/GuyFawks.stl', function(err, geometry) {
   geometry.computeFaceNormals();
   var mesh = new THREE.Mesh(geometry);
   mesh.position.set(0, 110, 0);
