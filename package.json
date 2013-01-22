@@ -25,6 +25,7 @@
     "minecraft-skin":     "0.0.1"
   },
   "scripts": {
-    "start": "echo \"open localhost:8080/\" && cd demo && ../node_modules/.bin/browservefy demo.js 8080 -- -d"
+    "start": "echo \"open localhost:8080/\" && cd demo && ../node_modules/.bin/browservefy demo.js 8080 -- -d",
+    "make": "mkdir -p dist && browserify demo/demo.js > bundle.js"
   }
 }
