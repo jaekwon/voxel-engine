@@ -25,6 +25,15 @@ var substack = skin(game.THREE, 'substack.png').createPlayerObject()
 substack.position.set(0, 62, -20)
 game.scene.add(substack)
 
+require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
+  geometry.computeFaceNormals();
+  var mesh = new THREE.Mesh(geometry);
+  mesh.position.set(0, 110, 0);
+  mesh.scale.set
+  mesh.rotation.y = Math.PI / 2.0;
+  game.scene.add(mesh);
+});
+
 var currentMaterial = 1
 
 blockSelector.on('select', function(material) {
