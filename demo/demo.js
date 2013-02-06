@@ -4,12 +4,13 @@ var voxel = require('voxel')
 var toolbar = require('toolbar')
 var blockSelector = toolbar({el: '#tools'})
 var skin = require('minecraft-skin')
+var cubeSize = 25;
 
 window.game = createGame({
   generate: voxel.generator['Valley'],
   texturePath: './textures/',
   materials: [['grass', 'dirt', 'grass_dirt'], 'brick', 'dirt', 'obsidian', 'crate'],
-  cubeSize: 25,
+  cubeSize: cubeSize,
   chunkSize: 32,
   chunkDistance: 2,
   startingPosition: [35, 350, 35],
@@ -28,10 +29,12 @@ game.scene.add(substack)
 require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
   geometry.computeFaceNormals();
   var mesh = new THREE.Mesh(geometry);
-  mesh.position.set(0, 110, 0);
-  mesh.scale.set
+  mesh.position.set(-400, 1000, 0);
+  mesh.scale.set(60,60,60);
   mesh.rotation.y = Math.PI / 2.0;
   game.scene.add(mesh);
+
+  require('voxel-geometry').voxelateMesh(game, mesh);
 });
 
 var currentMaterial = 1

@@ -80236,7 +80236,66 @@ require.define("/node_modules/voxel-geometry/index.js",function(require,module,e
     }
   };
 
-  this.voxelateLayer = function(geometry, pos, scale, y) {};
+  this.voxelateMesh = function(game, mesh) {
+    var THREE, cubeSize, end, geometry, line, material, maxX, maxXQ, maxY, maxYQ, maxZ, maxZQ, minX, minXQ, minY, minYQ, minZ, minZQ, start, vertex, worldVertex, x, xQ, y, yQ, _i, _j, _len, _ref, _results;
+    THREE = game.THREE;
+    minX = minY = minZ = maxX = maxY = maxZ = void 0;
+    cubeSize = game.cubeSize;
+    mesh.updateMatrixWorld();
+    _ref = mesh.geometry.vertices;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      vertex = _ref[_i];
+      worldVertex = vertex.clone();
+      mesh.localToWorld(worldVertex);
+      if (worldVertex.x < minX || minX === void 0) {
+        minX = worldVertex.x;
+      }
+      if (worldVertex.y < minY || minY === void 0) {
+        minY = worldVertex.y;
+      }
+      if (worldVertex.z < minZ || minZ === void 0) {
+        minZ = worldVertex.z;
+      }
+      if (worldVertex.x > maxX || maxX === void 0) {
+        maxX = worldVertex.x;
+      }
+      if (worldVertex.y > maxY || maxY === void 0) {
+        maxY = worldVertex.y;
+      }
+      if (worldVertex.z > maxZ || maxZ === void 0) {
+        maxZ = worldVertex.z;
+      }
+    }
+    minXQ = Math.floor(minX / cubeSize);
+    minYQ = Math.floor(minY / cubeSize);
+    minZQ = Math.floor(minZ / cubeSize);
+    maxXQ = Math.ceil(maxX / cubeSize);
+    maxYQ = Math.ceil(maxY / cubeSize);
+    maxZQ = Math.ceil(maxZ / cubeSize);
+    _results = [];
+    for (yQ = _j = minYQ; minYQ <= maxYQ ? _j <= maxYQ : _j >= maxYQ; yQ = minYQ <= maxYQ ? ++_j : --_j) {
+      y = yQ * cubeSize;
+      _results.push((function() {
+        var _k, _results1;
+        _results1 = [];
+        for (xQ = _k = minXQ; minXQ <= maxXQ ? _k <= maxXQ : _k >= maxXQ; xQ = minXQ <= maxXQ ? ++_k : --_k) {
+          x = xQ * cubeSize;
+          start = new THREE.Vector3(x, y, minZ);
+          end = new THREE.Vector3(x, y, maxZ);
+          material = new THREE.LineBasicMaterial({
+            color: 0xFFFFFF
+          });
+          geometry = new THREE.Geometry();
+          geometry.vertices.push(start);
+          geometry.vertices.push(end);
+          line = new THREE.Line(geometry, material);
+          _results1.push(game.scene.add(line));
+        }
+        return _results1;
+      })());
+    }
+    return _results;
+  };
 
 }).call(this);
 
@@ -80378,18 +80437,54 @@ function BinaryXHR(url, cb) {
 
 });
 
+require.define("/node_modules/voxel-geometry/node_modules/binary-xhr/node_modules/inherits/package.json",function(require,module,exports,__dirname,__filename,process,global){module.exports = {"main":"./inherits.js"}
+});
+
+require.define("/node_modules/voxel-geometry/node_modules/binary-xhr/node_modules/inherits/inherits.js",function(require,module,exports,__dirname,__filename,process,global){module.exports = inherits
+
+function inherits (c, p, proto) {
+  proto = proto || {}
+  var e = {}
+  ;[c.prototype, proto].forEach(function (s) {
+    Object.getOwnPropertyNames(s).forEach(function (k) {
+      e[k] = Object.getOwnPropertyDescriptor(s, k)
+    })
+  })
+  c.prototype = Object.create(p.prototype, e)
+  c.super = p
+}
+
+//function Child () {
+//  Child.super.call(this)
+//  console.error([this
+//                ,this.constructor
+//                ,this.constructor === Child
+//                ,this.constructor.super === Parent
+//                ,Object.getPrototypeOf(this) === Child.prototype
+//                ,Object.getPrototypeOf(Object.getPrototypeOf(this))
+//                 === Parent.prototype
+//                ,this instanceof Child
+//                ,this instanceof Parent])
+//}
+//function Parent () {}
+//inherits(Child, Parent)
+//new Child
+
+});
+
 require.define("/demo/demo.js",function(require,module,exports,__dirname,__filename,process,global){var createGame = require('../lib/game')
 var THREE = require('three')
 var voxel = require('voxel')
 var toolbar = require('toolbar')
 var blockSelector = toolbar({el: '#tools'})
 var skin = require('minecraft-skin')
+var cubeSize = 25;
 
 window.game = createGame({
   generate: voxel.generator['Valley'],
   texturePath: './textures/',
   materials: [['grass', 'dirt', 'grass_dirt'], 'brick', 'dirt', 'obsidian', 'crate'],
-  cubeSize: 25,
+  cubeSize: cubeSize,
   chunkSize: 32,
   chunkDistance: 2,
   startingPosition: [35, 350, 35],
@@ -80405,13 +80500,15 @@ var substack = skin(game.THREE, 'substack.png').createPlayerObject()
 substack.position.set(0, 62, -20)
 game.scene.add(substack)
 
-require('voxel-geometry').loadGeometry('/voxel-engine/demo/shapefiles/GuyFawks.stl', function(err, geometry) {
+require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
   geometry.computeFaceNormals();
   var mesh = new THREE.Mesh(geometry);
-  mesh.position.set(0, 110, 0);
-  mesh.scale.set
+  mesh.position.set(-400, 1000, 0);
+  mesh.scale.set(60,60,60);
   mesh.rotation.y = Math.PI / 2.0;
   game.scene.add(mesh);
+
+  require('voxel-geometry').voxelateMesh(game, mesh);
 });
 
 var currentMaterial = 1
