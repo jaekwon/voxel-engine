@@ -7232,21 +7232,30 @@ THREE.EventDispatcher = function () {
 			inverseMatrix.getInverse( object.matrixWorld );
 
 			localRay.copy( raycaster.ray ).transform( inverseMatrix );
-	
+
 			for ( var f = 0, fl = geometry.faces.length; f < fl; f ++ ) {
 
 				var face = geometry.faces[ f ];
 
 				var material = isFaceMaterial === true ? objectMaterials[ face.materialIndex ] : object.material;
 
-				if ( material === undefined ) continue;
+				if ( material === undefined ) {
+          continue;
+        }
 				
+        // console.log(face.normal);
 				facePlane.setFromNormalAndCoplanarPoint( face.normal, vertices[face.a] );
+        if (face.normal.x == 0 &&
+            face.normal.y == 0 &&
+            face.normal.z == 0) {
+        }
 
 				var planeDistance = localRay.distanceToPlane( facePlane );
 	
 				// bail if raycaster and plane are parallel
-				if ( Math.abs( planeDistance ) < precision ) continue;
+				if ( Math.abs( planeDistance ) < precision ) {
+          continue;
+        }
 	
 				// if negative distance, then plane is behind raycaster
 				if ( planeDistance < 0 ) continue;
@@ -80237,7 +80246,7 @@ require.define("/node_modules/voxel-geometry/index.js",function(require,module,e
   };
 
   this.voxelateMesh = function(game, mesh) {
-    var THREE, cubeSize, end, geometry, line, material, maxX, maxXQ, maxY, maxYQ, maxZ, maxZQ, minX, minXQ, minY, minYQ, minZ, minZQ, start, vertex, worldVertex, x, xQ, y, yQ, _i, _j, _len, _ref, _results;
+    var THREE, consumeJob, cubeSize, end, geometry, jobs, line, material, maxX, maxXQ, maxY, maxYQ, maxZ, maxZQ, minX, minXQ, minY, minYQ, minZ, minZQ, start, vertex, worldVertex, x, xQ, y, yQ, _i, _j, _k, _len, _ref;
     THREE = game.THREE;
     minX = minY = minZ = maxX = maxY = maxZ = void 0;
     cubeSize = game.cubeSize;
@@ -80272,29 +80281,90 @@ require.define("/node_modules/voxel-geometry/index.js",function(require,module,e
     maxXQ = Math.ceil(maxX / cubeSize);
     maxYQ = Math.ceil(maxY / cubeSize);
     maxZQ = Math.ceil(maxZ / cubeSize);
-    _results = [];
-    for (yQ = _j = minYQ; minYQ <= maxYQ ? _j <= maxYQ : _j >= maxYQ; yQ = minYQ <= maxYQ ? ++_j : --_j) {
+    jobs = [];
+    for (yQ = _j = minYQ; minYQ <= maxYQ ? _j < maxYQ : _j > maxYQ; yQ = minYQ <= maxYQ ? ++_j : --_j) {
       y = yQ * cubeSize;
-      _results.push((function() {
-        var _k, _results1;
-        _results1 = [];
-        for (xQ = _k = minXQ; minXQ <= maxXQ ? _k <= maxXQ : _k >= maxXQ; xQ = minXQ <= maxXQ ? ++_k : --_k) {
-          x = xQ * cubeSize;
-          start = new THREE.Vector3(x, y, minZ);
-          end = new THREE.Vector3(x, y, maxZ);
-          material = new THREE.LineBasicMaterial({
-            color: 0xFFFFFF
-          });
-          geometry = new THREE.Geometry();
-          geometry.vertices.push(start);
-          geometry.vertices.push(end);
-          line = new THREE.Line(geometry, material);
-          _results1.push(game.scene.add(line));
-        }
-        return _results1;
-      })());
+      for (xQ = _k = minXQ; minXQ <= maxXQ ? _k < maxXQ : _k > maxXQ; xQ = minXQ <= maxXQ ? ++_k : --_k) {
+        x = xQ * cubeSize;
+        start = new THREE.Vector3(x + cubeSize / 2, y + cubeSize / 2, minZ);
+        end = new THREE.Vector3(x + cubeSize / 2, y + cubeSize / 2, maxZ);
+        material = new THREE.LineBasicMaterial({
+          color: 0xFFFFFF
+        });
+        geometry = new THREE.Geometry();
+        geometry.vertices.push(start);
+        geometry.vertices.push(end);
+        line = new THREE.Line(geometry, material);
+        game.scene.add(line);
+        jobs.push({
+          yQ: yQ,
+          y: y,
+          xQ: xQ,
+          x: x,
+          line: line,
+          start: start,
+          end: end
+        });
+      }
     }
-    return _results;
+    consumeJob = function() {
+      var inside, intersect, intersectZ, intersectZQs, intersectZs, intersects, raycaster, z, zQ, _l, _ref1;
+      _ref1 = jobs.shift(), yQ = _ref1.yQ, y = _ref1.y, xQ = _ref1.xQ, x = _ref1.x, line = _ref1.line, start = _ref1.start, end = _ref1.end;
+      game.scene.remove(line);
+      raycaster = new THREE.Raycaster(start, new THREE.Vector3(0, 0, 1));
+      intersects = raycaster.intersectObject(mesh);
+      if (intersects.length > 0) {
+        if (intersects.length % 2 === 1) {
+          console.log("Intersects.length was an odd number. :(");
+          return;
+        }
+        intersectZs = (function() {
+          var _l, _len1, _results;
+          _results = [];
+          for (_l = 0, _len1 = intersects.length; _l < _len1; _l++) {
+            intersect = intersects[_l];
+            _results.push(intersect.point.z);
+          }
+          return _results;
+        })();
+        intersectZQs = (function() {
+          var _l, _len1, _results;
+          _results = [];
+          for (_l = 0, _len1 = intersectZs.length; _l < _len1; _l++) {
+            intersectZ = intersectZs[_l];
+            _results.push(Math.floor(intersectZ / cubeSize));
+          }
+          return _results;
+        })();
+        inside = false;
+        material = 1;
+        for (zQ = _l = minZQ; minZQ <= maxZQ ? _l < maxZQ : _l > maxZQ; zQ = minZQ <= maxZQ ? ++_l : --_l) {
+          z = zQ * cubeSize;
+          if (intersectZQs.length === 0 || intersectZQs[0] > zQ) {
+            if (inside) {
+              game.createBlock(new THREE.Vector3(x + cubeSize / 2, y + cubeSize / 2, z + cubeSize / 2), material);
+            }
+          } else if (intersectZQs[0] === zQ) {
+            while (intersectZQs[0] === zQ) {
+              inside = !inside;
+              if (inside) {
+                game.createBlock(new THREE.Vector3(x + cubeSize / 2, y + cubeSize / 2, z + cubeSize / 2), material);
+              }
+              intersectZs.shift();
+              intersectZQs.shift();
+            }
+          } else {
+            console.log("Should not happen");
+          }
+        }
+      }
+      if (jobs.length > 0) {
+        return setTimeout(consumeJob, 1000.0 / 60.0);
+      } else {
+        return game.scene.remove(mesh);
+      }
+    };
+    return consumeJob();
   };
 
 }).call(this);
@@ -80487,7 +80557,7 @@ window.game = createGame({
   cubeSize: cubeSize,
   chunkSize: 32,
   chunkDistance: 2,
-  startingPosition: [35, 350, 35],
+  startingPosition: [1435, 1460, 35],
   worldOrigin: [0,0,0],
   controlOptions: {jump: 6}
 })
@@ -80500,10 +80570,12 @@ var substack = skin(game.THREE, 'substack.png').createPlayerObject()
 substack.position.set(0, 62, -20)
 game.scene.add(substack)
 
-// require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
+//require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
 require('voxel-geometry').loadGeometry('/voxel-engine/demo/shapefiles/GuyFawks.stl', function(err, geometry) {
   geometry.computeFaceNormals();
-  var mesh = new THREE.Mesh(geometry);
+  material = new THREE.MeshBasicMaterial( { color: 0xFF44FF, wireframe: true } )
+  material.side = THREE.DoubleSide;
+  var mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(-400, 1000, 0);
   mesh.scale.set(60,60,60);
   mesh.rotation.y = Math.PI / 2.0;

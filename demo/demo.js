@@ -13,7 +13,7 @@ window.game = createGame({
   cubeSize: cubeSize,
   chunkSize: 32,
   chunkDistance: 2,
-  startingPosition: [35, 350, 35],
+  startingPosition: [1435, 1460, 35],
   worldOrigin: [0,0,0],
   controlOptions: {jump: 6}
 })
@@ -26,10 +26,12 @@ var substack = skin(game.THREE, 'substack.png').createPlayerObject()
 substack.position.set(0, 62, -20)
 game.scene.add(substack)
 
-// require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
+//require('voxel-geometry').loadGeometry('/shapefiles/GuyFawks.stl', function(err, geometry) {
 require('voxel-geometry').loadGeometry('/voxel-engine/demo/shapefiles/GuyFawks.stl', function(err, geometry) {
   geometry.computeFaceNormals();
-  var mesh = new THREE.Mesh(geometry);
+  material = new THREE.MeshBasicMaterial( { color: 0xFF44FF, wireframe: true } )
+  material.side = THREE.DoubleSide;
+  var mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(-400, 1000, 0);
   mesh.scale.set(60,60,60);
   mesh.rotation.y = Math.PI / 2.0;
